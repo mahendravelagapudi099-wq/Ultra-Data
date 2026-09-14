@@ -68,13 +68,28 @@ def load_real_sample(
     console.print(f"Target count: [yellow]{n} records (streaming mode)[/yellow]")
     console.print(f"Destination: [green]{output_path.as_posix()}[/green]\n")
 
-    try:
-        # Load in streaming mode to avoid downloading full multi-terabyte dataset
-        ds = load_dataset(dataset_name, split=split, streaming=True)
-    except Exception as e:
-        console.print(f"[bold yellow]Warning:[/bold yellow] Failed to connect or stream from '{dataset_name}': {e}")
-        console.print("[yellow]The pipeline will gracefully fall back to local substitute data.[/yellow]")
-        return False
+    ds = None
+    actual_split = split
+    for s in [split, "en", "train"]:
+        try:
+            ds = load_dataset(dataset_name, split=s, streaming=True, trust_remote_code=True)
+            actual_split = s
+            console.print(f"Connected to [green]{dataset_name}[/green] (split: [cyan]{s}[/cyan])")
+            break
+        except Exception as err:
+            console.print(f"[dim]Split '{s}' not found ({err}). Trying next...[/dim]")
+
+    if ds is None:
+        console.print("[yellow]Ultra-FineWeb unavailable. Trying HuggingFaceFW/fineweb (sample-10BT)...[/yellow]")
+        try:
+            ds = load_dataset("HuggingFaceFW/fineweb", split="sample-10BT", streaming=True)
+            dataset_name = "HuggingFaceFW/fineweb"
+            actual_split = "sample-10BT"
+            console.print("Connected to [green]HuggingFaceFW/fineweb[/green] (split: [cyan]sample-10BT[/cyan])")
+        except Exception as e:
+            console.print(f"[bold yellow]Warning:[/bold yellow] Real streaming failed: {e}")
+            console.print("[yellow]The pipeline will gracefully fall back to local substitute data.[/yellow]")
+            return False
 
     records = []
     total_chars = 0
