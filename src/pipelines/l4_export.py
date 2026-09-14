@@ -9,9 +9,14 @@ production-ready knowledge units with strict provenance and metadata.
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import pandas as pd
 import yaml
@@ -19,7 +24,10 @@ import yaml
 
 def load_config(config_path: str | Path) -> dict[str, Any]:
     """Load YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    path = Path(config_path)
+    if not path.is_absolute():
+        path = _PROJECT_ROOT / path
+    with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -63,6 +71,8 @@ def run_l4_export(config_path: str | Path) -> dict[str, Any]:
     """
     config = load_config(config_path)
     input_path = Path(config["input"]["path"])
+    if not input_path.is_absolute():
+        input_path = _PROJECT_ROOT / input_path
     output_cfg = config["output"]
 
     if not input_path.exists():
@@ -111,6 +121,8 @@ def run_l4_export(config_path: str | Path) -> dict[str, Any]:
             invalid_records.append(structured_record)
 
     output_dir = Path(output_cfg.get("dir", "data/l4_organized"))
+    if not output_dir.is_absolute():
+        output_dir = _PROJECT_ROOT / output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
     basename = output_cfg.get("basename", "l4_organized")
     formats = output_cfg.get("formats", ["parquet", "jsonl"])

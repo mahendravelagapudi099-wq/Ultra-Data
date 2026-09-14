@@ -3,11 +3,12 @@
 Stream a small real sample from openbmb/Ultra-FineWeb (Hugging Face) into L0 raw storage.
 
 Usage:
-    PYTHONPATH=. python scripts/load_real_data.py
+    PYTHONPATH=. python scripts/load_real_data.py [-n 150]
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -25,7 +26,7 @@ console = Console()
 
 DATASET_NAME = "openbmb/Ultra-FineWeb"
 TARGET_SPLIT = "train"
-NUM_RECORDS = 300
+NUM_RECORDS = 150
 OUTPUT_PATH = _PROJECT_ROOT / "data/l0_raw/l0_real_sample.jsonl"
 
 
@@ -33,7 +34,6 @@ def extract_text_from_record(row: dict) -> tuple[str, str]:
     """
     Dynamically locate text content and optional URL in dataset row.
     """
-    # Look for common text field names
     text_candidates = ["text", "content", "raw_content", "body", "document"]
     text = ""
     for field in text_candidates:
@@ -41,7 +41,6 @@ def extract_text_from_record(row: dict) -> tuple[str, str]:
             text = row[field]
             break
 
-    # If not found among candidates, pick first non-empty string value
     if not text:
         for k, v in row.items():
             if isinstance(v, str) and len(v.strip()) > 20:
@@ -59,7 +58,7 @@ def load_real_sample(
     output_path: Path = OUTPUT_PATH,
 ) -> bool:
     """
-    Stream records from Hugging Face dataset and write to JSONL.
+    Stream records from Hugging Face dataset and write to JSONL immediately.
     
     Returns True if successfully retrieved records, False otherwise.
     """
@@ -69,76 +68,74 @@ def load_real_sample(
     console.print(f"Destination: [green]{output_path.as_posix()}[/green]\n")
 
     ds = None
-    actual_split = split
-    for s in ["en", "zh", split, "train"]:
+    # Try the requested split first to avoid multiple full metadata resolutions
+    splits_to_try = [split] if split in ("train", "en") else [split, "train", "en"]
+    for s in splits_to_try:
         try:
+            console.print(f"Connecting to [green]{dataset_name}[/green] (split: [cyan]{s}[/cyan])...")
             ds = load_dataset(dataset_name, split=s, streaming=True)
-            actual_split = s
-            console.print(f"Connected to [green]{dataset_name}[/green] (split: [cyan]{s}[/cyan])")
+            console.print(f"Connected successfully to split: [cyan]{s}[/cyan]")
             break
         except Exception as err:
-            console.print(f"[dim]Split '{s}' not found ({err}). Trying next...[/dim]")
+            console.print(f"[dim]Split '{s}' unavailable ({err}). Trying fallback...[/dim]")
 
     if ds is None:
         console.print("[yellow]Ultra-FineWeb unavailable. Trying HuggingFaceFW/fineweb (sample-10BT)...[/yellow]")
         try:
             ds = load_dataset("HuggingFaceFW/fineweb", split="sample-10BT", streaming=True)
             dataset_name = "HuggingFaceFW/fineweb"
-            actual_split = "sample-10BT"
             console.print("Connected to [green]HuggingFaceFW/fineweb[/green] (split: [cyan]sample-10BT[/cyan])")
         except Exception as e:
             console.print(f"[bold yellow]Warning:[/bold yellow] Real streaming failed: {e}")
             console.print("[yellow]The pipeline will gracefully fall back to local substitute data.[/yellow]")
             return False
 
-    records = []
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    records_saved = 0
     total_chars = 0
 
     try:
-        console.print("Streaming records...")
-        for i, row in enumerate(ds):
-            if i >= n:
-                break
-            text, url = extract_text_from_record(row)
-            if not text:
-                continue
+        console.print("Streaming and saving records...")
+        with open(output_path, "w", encoding="utf-8") as f:
+            for i, row in enumerate(ds):
+                if records_saved >= n:
+                    break
+                text, url = extract_text_from_record(row)
+                if not text:
+                    continue
 
-            record = {
-                "id": f"real_{len(records)}",
-                "text": text,
-                "source": dataset_name,
-                "url": url,
-            }
-            records.append(record)
-            total_chars += len(text)
+                record = {
+                    "id": f"real_{records_saved}",
+                    "text": text,
+                    "source": dataset_name,
+                    "url": url,
+                }
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                f.flush()
+                records_saved += 1
+                total_chars += len(text)
 
-            if (len(records)) % 50 == 0:
-                console.print(f"  Fetched {len(records)}/{n} records...")
+                if records_saved % 25 == 0 or records_saved == n:
+                    console.print(f"  Fetched & saved {records_saved}/{n} records...")
 
     except Exception as e:
-        console.print(f"[bold yellow]Warning:[/bold yellow] Error during streaming iteration: {e}")
-        if not records:
+        console.print(f"[bold yellow]Warning:[/bold yellow] Streaming interrupted or error: {e}")
+        if records_saved == 0:
             console.print("[yellow]No records fetched. Pipeline will use local fallback.[/yellow]")
             return False
-        console.print(f"[yellow]Retaining {len(records)} partially fetched records.[/yellow]")
+        console.print(f"[yellow]Retaining {records_saved} records already saved to disk.[/yellow]")
 
-    if not records:
+    if records_saved == 0:
         console.print("[bold yellow]Warning: No records were extracted. Pipeline will use local fallback.[/bold yellow]")
         return False
 
-    # Save to destination JSONL
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        for rec in records:
-            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-    avg_chars = round(total_chars / max(len(records), 1), 1)
+    avg_chars = round(total_chars / max(records_saved, 1), 1)
 
     table = Table(title="Real Data Fetch Summary", show_header=True, header_style="bold magenta")
     table.add_column("Property", style="cyan")
     table.add_column("Value", style="green", justify="right")
     table.add_row("Dataset Name", dataset_name)
-    table.add_row("Records Fetched", str(len(records)))
+    table.add_row("Records Fetched", str(records_saved))
     table.add_row("Average Text Length (chars)", f"{avg_chars:,}")
     table.add_row("Output File", output_path.as_posix())
     console.print(table)
@@ -147,9 +144,12 @@ def load_real_sample(
 
 
 def main() -> None:
-    success = load_real_sample()
+    parser = argparse.ArgumentParser(description="Stream real sample from Hugging Face into L0")
+    parser.add_argument("-n", "--count", type=int, default=NUM_RECORDS, help="Number of records to fetch")
+    args = parser.parse_args()
+
+    success = load_real_sample(n=args.count)
     if not success:
-        # Exit with status 0 so calling automation / Colab continues to fallback
         console.print("[dim]Graceful exit — ready for fallback pipeline execution.[/dim]")
         sys.exit(0)
 

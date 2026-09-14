@@ -10,8 +10,13 @@ All outputs are clearly tagged with 'mock_llm'.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import pandas as pd
 import yaml
@@ -22,13 +27,18 @@ from src.utils.llm_provider import MockLLMProvider
 
 def load_config(config_path: str | Path) -> dict[str, Any]:
     """Load YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    path = Path(config_path)
+    if not path.is_absolute():
+        path = _PROJECT_ROOT / path
+    with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def load_l2_data(input_path: str | Path) -> pd.DataFrame:
     """Load L2 selected records from Parquet or JSONL."""
     path = Path(input_path)
+    if not path.is_absolute():
+        path = _PROJECT_ROOT / path
     if not path.exists():
         raise FileNotFoundError(f"L2 input file not found: {path.as_posix()}")
 
@@ -58,7 +68,8 @@ def run_l3(config_path: str | Path) -> dict[str, Any]:
         Summary statistics dictionary.
     """
     config = load_config(config_path)
-    input_path = config["input"]["path"]
+    raw_inp = Path(config["input"]["path"])
+    input_path = raw_inp if raw_inp.is_absolute() else _PROJECT_ROOT / raw_inp
     output_cfg = config["output"]
 
     df_l2 = load_l2_data(input_path)
@@ -96,7 +107,8 @@ def run_l3(config_path: str | Path) -> dict[str, Any]:
         }
         refined_records.append(record)
 
-    output_dir = Path(output_cfg.get("dir", "data/l3_refined"))
+    raw_out = Path(output_cfg.get("dir", "data/l3_refined"))
+    output_dir = raw_out if raw_out.is_absolute() else _PROJECT_ROOT / raw_out
     output_dir.mkdir(parents=True, exist_ok=True)
     basename = output_cfg.get("basename", "l3_refined")
     formats = output_cfg.get("formats", ["parquet", "jsonl"])

@@ -7,8 +7,13 @@ I/O boundary only — pure logic delegated to text_clean.py and l1_filter.py.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import pandas as pd
 import yaml
@@ -27,7 +32,10 @@ from src.pipelines.l1_filter import (
 
 def load_config(config_path: str | Path) -> dict[str, Any]:
     """Load YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    path = Path(config_path)
+    if not path.is_absolute():
+        path = _PROJECT_ROOT / path
+    with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -108,7 +116,8 @@ def load_raw_data(config: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
 
     # 1. Check real_data_path if use_real_data is True
     if use_real_data and real_data_path:
-        p = Path(real_data_path)
+        raw_p = Path(real_data_path)
+        p = raw_p if raw_p.is_absolute() else _PROJECT_ROOT / raw_p
         if p.exists() and p.is_file() and p.stat().st_size > 0:
             try:
                 records = load_local_substitute(p)
@@ -146,10 +155,13 @@ def load_raw_data(config: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
             print(f"[L1] FineWeb streaming failed: {e}. Using local substitute...")
 
     # 4. Fallback to local substitute
-    if fallback_path and Path(fallback_path).exists():
-        records = load_local_substitute(fallback_path)
-        print(f"[L1] Using local substitute data: {fallback_path}")
-        return records[:n], "local_substitute"
+    if fallback_path:
+        raw_fb = Path(fallback_path)
+        p_fb = raw_fb if raw_fb.is_absolute() else _PROJECT_ROOT / raw_fb
+        if p_fb.exists():
+            records = load_local_substitute(p_fb)
+            print(f"[L1] Using local substitute data: {p_fb.as_posix()}")
+            return records[:n], "local_substitute"
 
     raise RuntimeError("No data source available and no fallback file found.")
 
@@ -220,7 +232,8 @@ def run_l1(config_path: str | Path) -> dict[str, Any]:
     removed_count = input_count - output_count - duplicate_count
 
     # Save outputs
-    output_dir = Path(output_cfg["dir"])
+    raw_out = Path(output_cfg["dir"])
+    output_dir = raw_out if raw_out.is_absolute() else _PROJECT_ROOT / raw_out
     output_dir.mkdir(parents=True, exist_ok=True)
 
     basename = output_cfg["basename"]

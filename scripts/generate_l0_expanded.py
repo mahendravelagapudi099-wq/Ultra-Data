@@ -14,7 +14,12 @@ All rows marked with source='local_substitute_l1'
 """
 
 import json
+import sys
 from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 
 GOOD_TEXTS = [
@@ -281,7 +286,7 @@ def generate_raw_records(target_count: int = 250) -> list[dict]:
 
 
 def main():
-    output_path = Path("data/l0_raw/l0_expanded_SUBSTITUTE.jsonl")
+    output_path = _PROJECT_ROOT / "data/l0_raw/l0_expanded_SUBSTITUTE.jsonl"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     records = generate_raw_records(150)

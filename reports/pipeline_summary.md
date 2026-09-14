@@ -5,7 +5,7 @@
 > *"Data Science and Technology Towards AGI Part I: Tiered Data Management"* (arXiv:2602.09003).
 > Heuristics, thresholds, and mock LLM synthesizers are lightweight starter implementations and do not claim paper-scale results.
 
-**Generated:** 2026-09-14 09:55:46 UTC  
+**Generated:** 2026-09-14 10:43:35 UTC  
 **Environment:** Colab / Linux / Local agnostic  
 
 ## 1. Tier-by-Tier Quality Progression

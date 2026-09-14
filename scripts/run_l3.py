@@ -33,15 +33,19 @@ console = Console()
 @app.command()
 def main(
     config: Path = typer.Option(
-        Path("configs/l3_tiny.yaml"),
+        None,
         "--config",
         "-c",
-        help="Path to L3 YAML config",
-        exists=True,
-        readable=True,
+        help="Path to L3 YAML config (default: configs/l3_tiny.yaml)",
     ),
 ) -> None:
     """Run L3 refinement pipeline and display summary table."""
+    if config is None:
+        config = _PROJECT_ROOT / "configs/l3_tiny.yaml"
+    elif not config.is_absolute() and not config.exists():
+        if (_PROJECT_ROOT / config).exists():
+            config = _PROJECT_ROOT / config
+
     console.rule("[bold cyan]L3 Demo — Tier 3 LLM Refinement & Synthesis[/bold cyan]")
     console.print(f"Config: [green]{config.as_posix()}[/green]")
 

@@ -33,15 +33,19 @@ console = Console()
 @app.command()
 def main(
     config: Path = typer.Option(
-        Path("configs/l2_tiny.yaml"),
+        None,
         "--config",
         "-c",
-        help="Path to L2 YAML config",
-        exists=True,
-        readable=True,
+        help="Path to L2 YAML config (default: configs/l2_tiny.yaml)",
     ),
 ) -> None:
     """Run L2 selection pipeline and display summary table."""
+    if config is None:
+        config = _PROJECT_ROOT / "configs/l2_tiny.yaml"
+    elif not config.is_absolute() and not config.exists():
+        if (_PROJECT_ROOT / config).exists():
+            config = _PROJECT_ROOT / config
+
     console.rule("[bold cyan]L2 Demo — Tier 2 Model-Driven Selection[/bold cyan]")
     console.print(f"Config: [green]{config.as_posix()}[/green]")
 

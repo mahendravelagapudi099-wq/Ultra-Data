@@ -51,37 +51,40 @@ def _load_tier_df(paths: list[Path]) -> pd.DataFrame:
 @app.command()
 def main(
     output_dir: Path = typer.Option(
-        Path("reports"),
+        None,
         "--output-dir",
         "-o",
-        help="Directory to save evaluation reports",
+        help="Directory to save evaluation reports (default: <project_root>/reports)",
     ),
 ) -> None:
     """Run pipeline evaluation and generate cross-tier comparison reports."""
+    if output_dir is None:
+        output_dir = _PROJECT_ROOT / "reports"
     console.rule("[bold cyan]Pipeline Evaluation — Cross-Tier Progression[/bold cyan]")
 
     # Tier candidate file paths (expanded or tiny)
     tier_files = {
         "L0_Raw": [
-            Path("data/l0_raw/l0_expanded_SUBSTITUTE.jsonl"),
-            Path("data/l0_raw/sample_l0_tiny_SUBSTITUTE.jsonl"),
+            _PROJECT_ROOT / "data/l0_raw/l0_real_sample.jsonl",
+            _PROJECT_ROOT / "data/l0_raw/l0_expanded_SUBSTITUTE.jsonl",
+            _PROJECT_ROOT / "data/l0_raw/sample_l0_tiny_SUBSTITUTE.jsonl",
         ],
         "L1_Filtered": [
-            Path("data/l1_filtered/l1_expanded_SUBSTITUTE.parquet"),
-            Path("data/l1_filtered/l1_filtered_tiny.parquet"),
-            Path("data/l1_filtered/l1_expanded_SUBSTITUTE.jsonl"),
+            _PROJECT_ROOT / "data/l1_filtered/l1_expanded_SUBSTITUTE.parquet",
+            _PROJECT_ROOT / "data/l1_filtered/l1_filtered_tiny.parquet",
+            _PROJECT_ROOT / "data/l1_filtered/l1_expanded_SUBSTITUTE.jsonl",
         ],
         "L2_Selected": [
-            Path("data/l2_selected/l2_selected.parquet"),
-            Path("data/l2_selected/l2_selected.jsonl"),
+            _PROJECT_ROOT / "data/l2_selected/l2_selected.parquet",
+            _PROJECT_ROOT / "data/l2_selected/l2_selected.jsonl",
         ],
         "L3_Refined": [
-            Path("data/l3_refined/l3_refined.parquet"),
-            Path("data/l3_refined/l3_refined.jsonl"),
+            _PROJECT_ROOT / "data/l3_refined/l3_refined.parquet",
+            _PROJECT_ROOT / "data/l3_refined/l3_refined.jsonl",
         ],
         "L4_Organized": [
-            Path("data/l4_organized/l4_organized.parquet"),
-            Path("data/l4_organized/l4_organized.jsonl"),
+            _PROJECT_ROOT / "data/l4_organized/l4_organized.parquet",
+            _PROJECT_ROOT / "data/l4_organized/l4_organized.jsonl",
         ],
     }
 

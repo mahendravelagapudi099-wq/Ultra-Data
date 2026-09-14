@@ -20,7 +20,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 REAL_DATA_PATH = _PROJECT_ROOT / "data/l0_raw/l0_real_sample.jsonl"
-L1_CONFIG = "configs/l1_expanded.yaml"
+L1_CONFIG = (_PROJECT_ROOT / "configs/l1_expanded.yaml").as_posix()
 
 
 def main() -> None:
@@ -32,7 +32,8 @@ def main() -> None:
     else:
         print("[Phase 1] No real data found — generating local substitute data...")
         result = subprocess.run(
-            [sys.executable, "scripts/generate_l0_expanded.py"],
+            [sys.executable, str(_PROJECT_ROOT / "scripts/generate_l0_expanded.py")],
+            cwd=str(_PROJECT_ROOT),
             check=False,
         )
         if result.returncode != 0:
@@ -40,7 +41,8 @@ def main() -> None:
 
     print(f"[Phase 1] Running L1 filtering with config: {L1_CONFIG}")
     result = subprocess.run(
-        [sys.executable, "scripts/run_l1.py", "--config", L1_CONFIG],
+        [sys.executable, str(_PROJECT_ROOT / "scripts/run_l1.py"), "--config", L1_CONFIG],
+        cwd=str(_PROJECT_ROOT),
         check=False,
     )
     sys.exit(result.returncode)

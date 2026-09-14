@@ -9,8 +9,13 @@ All reported paths use POSIX forward-slash format.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import pandas as pd
 import yaml
@@ -26,13 +31,18 @@ from src.pipelines.l2_select import (
 
 def load_config(config_path: str | Path) -> dict[str, Any]:
     """Load YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    path = Path(config_path)
+    if not path.is_absolute():
+        path = _PROJECT_ROOT / path
+    with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def load_l1_data(input_path: str | Path) -> pd.DataFrame:
     """Load L1 filtered records from Parquet or JSONL file."""
     path = Path(input_path)
+    if not path.is_absolute():
+        path = _PROJECT_ROOT / path
     if not path.exists():
         raise FileNotFoundError(f"L1 input file not found: {path.as_posix()}")
 
@@ -63,7 +73,8 @@ def run_l2(config_path: str | Path) -> dict[str, Any]:
         Summary metrics dictionary.
     """
     config = load_config(config_path)
-    input_path = config["input"]["path"]
+    raw_inp = Path(config["input"]["path"])
+    input_path = raw_inp if raw_inp.is_absolute() else _PROJECT_ROOT / raw_inp
     
     l2_cfg = L2Config(
         selection_threshold=config.get("selection", {}).get("threshold", 0.5),
@@ -92,8 +103,10 @@ def run_l2(config_path: str | Path) -> dict[str, Any]:
     selected_count = len(df_selected)
 
     # Output paths setup
-    scores_dir = Path(config["output"].get("scores_dir", "data/l2_scores"))
-    selected_dir = Path(config["output"].get("selected_dir", "data/l2_selected"))
+    raw_scores_dir = Path(config["output"].get("scores_dir", "data/l2_scores"))
+    scores_dir = raw_scores_dir if raw_scores_dir.is_absolute() else _PROJECT_ROOT / raw_scores_dir
+    raw_selected_dir = Path(config["output"].get("selected_dir", "data/l2_selected"))
+    selected_dir = raw_selected_dir if raw_selected_dir.is_absolute() else _PROJECT_ROOT / raw_selected_dir
     basename = config["output"].get("basename", "l2_selected")
     formats = config["output"].get("formats", ["parquet", "jsonl"])
 
