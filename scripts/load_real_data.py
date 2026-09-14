@@ -70,9 +70,9 @@ def load_real_sample(
 
     ds = None
     actual_split = split
-    for s in [split, "en", "train"]:
+    for s in ["en", "zh", split, "train"]:
         try:
-            ds = load_dataset(dataset_name, split=s, streaming=True, trust_remote_code=True)
+            ds = load_dataset(dataset_name, split=s, streaming=True)
             actual_split = s
             console.print(f"Connected to [green]{dataset_name}[/green] (split: [cyan]{s}[/cyan])")
             break
