@@ -19,7 +19,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-REAL_DATA_PATH = Path("data/l0_raw/l0_real_sample.jsonl")
+REAL_DATA_PATH = _PROJECT_ROOT / "data/l0_raw/l0_real_sample.jsonl"
 L1_CONFIG = "configs/l1_expanded.yaml"
 
 

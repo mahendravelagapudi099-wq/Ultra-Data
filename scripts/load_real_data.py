@@ -26,7 +26,7 @@ console = Console()
 DATASET_NAME = "openbmb/Ultra-FineWeb"
 TARGET_SPLIT = "train"
 NUM_RECORDS = 300
-OUTPUT_PATH = Path("data/l0_raw/l0_real_sample.jsonl")
+OUTPUT_PATH = _PROJECT_ROOT / "data/l0_raw/l0_real_sample.jsonl"
 
 
 def extract_text_from_record(row: dict) -> tuple[str, str]:
