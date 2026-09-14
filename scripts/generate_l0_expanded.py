@@ -13,9 +13,12 @@ Creates data/l0_raw/l0_expanded_SUBSTITUTE.jsonl with ~150 rows of varied qualit
 All rows marked with source='local_substitute_l1'
 """
 
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
@@ -196,7 +199,7 @@ LOW_INFO_TEXTS = [
 DUPLICATE_INDICES = [0, 2, 5, 8, 11]  # Will duplicate these good texts
 
 
-def generate_raw_records(target_count: int = 250) -> list[dict]:
+def generate_raw_records(target_count: int = 250) -> list[dict[str, Any]]:
     """Generate raw substitute records with varied quality."""
     records = []
     idx = 0
@@ -285,7 +288,7 @@ def generate_raw_records(target_count: int = 250) -> list[dict]:
     return records[:target_count]
 
 
-def main():
+def main() -> None:
     output_path = _PROJECT_ROOT / "data/l0_raw/l0_expanded_SUBSTITUTE.jsonl"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -295,8 +298,8 @@ def main():
         for record in records:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
-    print(f"Generated {len(records)} raw substitute records at {output_path}")
-    print(f"Source: local_substitute_l1")
+    print(f"Generated {len(records)} raw substitute records at {output_path.as_posix()}")
+    print("Source: local_substitute_l1")
 
 
 if __name__ == "__main__":

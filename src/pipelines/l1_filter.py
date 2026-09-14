@@ -1,14 +1,18 @@
 """
-Pure filter and deduplication utilities for L1 (Tier 1: Clean).
+Pure filter and deduplication utilities for Tier 1 (L1: Clean).
 
-Maps to paper methodology: heuristic filtering + exact deduplication.
-Functions are pure — same input = same output, no side effects.
+Part of the L0-L4 Tiered Data Management framework (arXiv:2602.09003).
+Maps to paper methodology: heuristic filtering (length, word count, character/symbol ratios)
+and exact deduplication (SHA-256).
+Functions are pure — deterministic, with no side effects or I/O.
 """
+
+from __future__ import annotations
 
 import hashlib
 import re
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
 # Heuristic filter thresholds (config-driven via l1_run.py)
 # These are starter values — NOT cited from paper.pdf
@@ -108,7 +112,7 @@ def hash_doc(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def compute_stats(text: str) -> dict:
+def compute_stats(text: str) -> dict[str, Any]:
     """
     Compute basic text statistics for L1 output record.
 

@@ -1,24 +1,46 @@
-# L2 Selection Tiny Demo Configuration
-# Supports Phase 2: Model-Driven Selection
-# Thresholds and weak labels are starter heuristic values — NOT cited from paper.pdf
+# ==============================================================================
+# L2 Model-Driven Selection Tiny Demo Configuration
+# Part of the L0-L4 Tiered Data Management Framework (arXiv:2602.09003)
+#
+# NOTE: Model hyperparameters, selection thresholds, and weak labels are starter
+# baseline values for demo reproduction — NOT cited from paper.pdf.
+# ==============================================================================
 
 input:
+  # Primary input file: L1 cleaned and filtered dataset
   path: data/l1_filtered/l1_expanded_SUBSTITUTE.parquet
+
+  # Fallback input file if primary path is absent
   fallback_path: data/l1_filtered/l1_filtered_tiny.parquet
 
 model:
+  # Proportion of dataset held out for evaluation (preprocessing fit ONLY on train)
   test_size: 0.3
+
+  # Random seed for reproducible dataset splitting and model training
   random_state: 42
+
+  # Maximum number of TF-IDF n-gram features for lexical modeling
   max_tfidf_features: 300
 
 selection:
+  # Quality score probability threshold for document retention (L2 candidates)
   threshold: 0.50
+
+  # Minimum ratio of documents to retain based on ranked score (top-k fallback)
   top_k_ratio: 0.50
 
 output:
+  # Output directory for complete scored dataset (probability distribution)
   scores_dir: data/l2_scores
+
+  # Output directory for top selected documents
   selected_dir: data/l2_selected
+
+  # Base filename for outputs
   basename: l2_selected
+
+  # Storage formats to export
   formats:
     - parquet
     - jsonl

@@ -1,10 +1,11 @@
 """
-LLM provider abstraction and deterministic offline mock provider for Phase 3 (L3: Refinement).
+Tier 3 (L3: Refinement) LLM Provider Abstraction and Deterministic Mock Implementation.
 
-Supports Phase 3: L3 LLM Refinement & Synthesis.
+Part of the L0-L4 Tiered Data Management framework (arXiv:2602.09003).
 Maps to paper methodology: using LLMs to synthesize, clean, and convert selected
 web text into high-density educational formats (Q&A pairs, textbook explanations).
-Deterministic offline implementation avoids API keys, network calls, and heavy dependencies.
+Deterministic offline implementation avoids API keys, GPU hardware, and network calls.
+All mock outputs are explicitly tagged with 'mock_llm'.
 """
 
 from __future__ import annotations

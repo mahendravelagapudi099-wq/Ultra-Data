@@ -1,10 +1,10 @@
 """
-L3 orchestration: load L2 selected → synthesize with MockLLMProvider → save refined data.
+Tier 3 (L3: Refinement) Orchestration Module.
 
-Supports Phase 3: L3 LLM Refinement & Synthesis.
-Maps to paper methodology: transforming selected web data into synthetic educational
-text, grounded Q&A pairs, and textbook chapters.
-All outputs are clearly tagged with 'mock_llm'.
+Part of the L0-L4 Tiered Data Management framework (arXiv:2602.09003).
+Coordinates Phase 3: Transforms high-value selected web text (L2) into synthetic
+educational artifacts (refined text, Q&A pairs, textbook chapters) via deterministic
+offline MockLLMProvider. All outputs are explicitly tagged with 'mock_llm'.
 """
 
 from __future__ import annotations
@@ -40,7 +40,10 @@ def load_l2_data(input_path: str | Path) -> pd.DataFrame:
     if not path.is_absolute():
         path = _PROJECT_ROOT / path
     if not path.exists():
-        raise FileNotFoundError(f"L2 input file not found: {path.as_posix()}")
+        raise FileNotFoundError(
+            f"L2 input file not found: {path.as_posix()}. "
+            "Run Phase 2 first via 'python scripts/run_l2.py' to generate it."
+        )
 
     if path.suffix == ".parquet":
         return pd.read_parquet(path)
@@ -75,7 +78,7 @@ def run_l3(config_path: str | Path) -> dict[str, Any]:
     df_l2 = load_l2_data(input_path)
     input_count = len(df_l2)
     if input_count == 0:
-        raise ValueError("L2 input dataset is empty. Run Phase 2 first.")
+        raise ValueError("L2 input dataset is empty. Run Phase 2 first via 'python scripts/run_l2.py'.")
 
     provider = MockLLMProvider()
     refined_records: list[dict[str, Any]] = []

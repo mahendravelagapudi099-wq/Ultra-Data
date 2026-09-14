@@ -46,6 +46,11 @@ def main(
         if (_PROJECT_ROOT / config).exists():
             config = _PROJECT_ROOT / config
 
+    if not config.exists():
+        console.print(f"[bold red]Error:[/bold red] Config file not found at: {config.as_posix()}")
+        console.print("[yellow]Hint:[/yellow] Verify the configuration path or choose 'configs/l2_tiny.yaml' or 'configs/l2_expanded.yaml'.")
+        sys.exit(1)
+
     console.rule("[bold cyan]L2 Demo — Tier 2 Model-Driven Selection[/bold cyan]")
     console.print(f"Config: [green]{config.as_posix()}[/green]")
 
@@ -60,8 +65,8 @@ def main(
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green", justify="right")
 
-    table.add_row("Input Records (L1)", str(stats["input_count"]))
-    table.add_row("Selected Records (L2)", str(stats["selected_count"]))
+    table.add_row("Input Records (L1)", f"{stats['input_count']:,}")
+    table.add_row("Selected Records (L2)", f"{stats['selected_count']:,}")
     table.add_row("Selection Rate", f"{stats['selection_rate'] * 100:.1f}%")
     table.add_row("Selector Train Accuracy", f"{stats['train_accuracy'] * 100:.1f}%")
     table.add_row("Selector Test Accuracy", f"{stats['test_accuracy'] * 100:.1f}%")

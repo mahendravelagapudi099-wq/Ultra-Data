@@ -1,25 +1,56 @@
-# L1 Expanded Configuration
-# Supports real data ingestion from openbmb/Ultra-FineWeb with automatic mock fallback
-# Thresholds are starter heuristic values — NOT cited from paper.pdf
+# ==============================================================================
+# L1 Expanded Pipeline Configuration
+# Part of the L0-L4 Tiered Data Management Framework (arXiv:2602.09003)
+#
+# NOTE: Filter thresholds, heuristic values, and sample sizes are starter
+# baseline values for demo reproduction — NOT cited from paper.pdf.
+# ==============================================================================
 
 input:
+  # Flag: When true, checks for pre-fetched real web data at real_data_path
   use_real_data: true
+
+  # Path to real web sample (populated via scripts/load_real_data.py)
+  # If this file exists and is non-empty, L1 ingests it directly.
   real_data_path: data/l0_raw/l0_real_sample.jsonl
+
+  # Streaming mode identifier (used when streaming directly via datasets library)
   mode: real_data_streaming
+
+  # Target Hugging Face dataset for real data ingestion
   dataset: openbmb/Ultra-FineWeb
+
+  # Split name for streaming
   split: train
+
+  # Maximum number of records to ingest into L1
   n: 300
+
+  # Automatic fallback path: If real_data_path does not exist or network fails,
+  # the pipeline automatically falls back to this local expanded substitute dataset.
   fallback_path: data/l0_raw/l0_expanded_SUBSTITUTE.jsonl
 
 filters:
+  # Minimum character count required for document retention
   min_chars: 200
+
+  # Minimum word count required for document retention
   min_words: 30
+
+  # Minimum ratio of alphabetic characters to total characters (filters symbol junk)
   min_alpha_ratio: 0.5
+
+  # Maximum allowable ratio of symbols to total characters (filters code/markup remnants)
   max_symbol_ratio: 0.3
 
 output:
+  # Output directory for L1 cleaned and filtered records
   dir: data/l1_filtered
+
+  # Base filename for outputs (will produce .parquet and .jsonl files)
   basename: l1_expanded_SUBSTITUTE
+
+  # Storage formats to export
   formats:
     - parquet
     - jsonl

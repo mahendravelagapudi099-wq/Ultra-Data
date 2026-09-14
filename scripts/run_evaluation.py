@@ -97,12 +97,24 @@ def main(
         tier_metrics.append(m)
         doc_counts[tier_name] = m["doc_count"]
 
+    # Detect primary raw data source
+    real_path = _PROJECT_ROOT / "data/l0_raw/l0_real_sample.jsonl"
+    source_info = (
+        "openbmb/Ultra-FineWeb (real Hugging Face streaming sample)"
+        if (real_path.exists() and real_path.stat().st_size > 0)
+        else "Local expanded substitute dataset (deterministic offline)"
+    )
+
     # Compute transition rates
     l0_count = doc_counts.get("L0_Raw", 0)
     l1_count = doc_counts.get("L1_Filtered", 0)
     l2_count = doc_counts.get("L2_Selected", 0)
     l3_count = doc_counts.get("L3_Refined", 0)
     l4_count = doc_counts.get("L4_Organized", 0)
+
+    if sum(doc_counts.values()) == 0:
+        console.print("[yellow]Warning: No tiered datasets found in 'data/'.[/yellow]")
+        console.print("[yellow]Hint: Run Phase 1 first via 'python scripts/run_phase1.py' to generate initial data.[/yellow]\n")
 
     rates = {
         "l1_retention": round(l1_count / max(l0_count, 1), 4),
@@ -124,13 +136,14 @@ def main(
     for m in tier_metrics:
         table.add_row(
             m["tier"],
-            str(m["doc_count"]),
-            str(m["avg_word_count"]),
+            f"{m['doc_count']:,}",
+            f"{m['avg_word_count']:,.1f}",
             f"{m['avg_alpha_ratio']:.4f}",
             f"{m['avg_symbol_ratio']:.4f}",
-            str(m["duplicate_count"]),
+            f"{m['duplicate_count']:,}",
         )
 
+    console.print(f"Data Source: [green]{source_info}[/green]\n")
     console.print(table)
 
     # Save reports
@@ -143,6 +156,7 @@ def main(
     df_metrics.to_csv(csv_path, index=False)
 
     report_payload = {
+        "data_source": source_info,
         "tier_metrics": tier_metrics,
         "transition_rates": rates,
         "disclaimer": "Tiny demo reproduction — starter heuristics and mock models, not paper-scale results.",
@@ -150,7 +164,7 @@ def main(
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(report_payload, f, indent=2)
 
-    md_content = generate_markdown_report(tier_metrics, rates)
+    md_content = generate_markdown_report(tier_metrics, rates, source_info=source_info)
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(md_content)
 

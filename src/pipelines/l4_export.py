@@ -1,9 +1,10 @@
 """
-L4 orchestration: validate L3 synthesized records → export structured knowledge units.
+Tier 4 (L4: Organized) Knowledge Export Orchestration Module.
 
-Supports Optional Phase 3.5: L4 Organized Knowledge Export.
-Maps to paper methodology: validating and standardizing synthesized data into
-production-ready knowledge units with strict provenance and metadata.
+Part of the L0-L4 Tiered Data Management framework (arXiv:2602.09003).
+Coordinates Optional Phase 3.5: Validates synthesized records (L3) against
+structural quality gates (text length, QA formatting, chapter headers) and exports
+production-grade structured knowledge units with provenance and UTC timestamps.
 """
 
 from __future__ import annotations
@@ -76,7 +77,10 @@ def run_l4_export(config_path: str | Path) -> dict[str, Any]:
     output_cfg = config["output"]
 
     if not input_path.exists():
-        raise FileNotFoundError(f"L3 input file not found: {input_path.as_posix()}")
+        raise FileNotFoundError(
+            f"L3 input file not found: {input_path.as_posix()}. "
+            "Run Phase 3 first via 'python scripts/run_l3.py' to generate it."
+        )
 
     if input_path.suffix == ".parquet":
         df_l3 = pd.read_parquet(input_path)
@@ -90,7 +94,7 @@ def run_l4_export(config_path: str | Path) -> dict[str, Any]:
 
     input_count = len(df_l3)
     if input_count == 0:
-        raise ValueError("L3 input dataset is empty. Run Phase 3 first.")
+        raise ValueError("L3 input dataset is empty. Run Phase 3 first via 'python scripts/run_l3.py'.")
 
     now_iso = datetime.now(timezone.utc).isoformat()
     valid_records: list[dict[str, Any]] = []

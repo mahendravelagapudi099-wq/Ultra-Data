@@ -1,9 +1,13 @@
 """
-Pure text cleaning utilities for L1 (Tier 1: Clean).
+Pure text cleaning utilities for Tier 1 (L1: Clean).
 
-Maps to paper methodology: deterministic cleaning before LLM selection.
-Functions are pure — same input = same output, no side effects.
+Part of the L0-L4 Tiered Data Management framework (arXiv:2602.09003).
+Maps to paper methodology: deterministic text normalization and boilerplate removal
+prior to model-driven selection.
+Functions are pure — deterministic, with no side effects or I/O.
 """
+
+from __future__ import annotations
 
 import re
 import unicodedata

@@ -1,7 +1,10 @@
 """
-L1 orchestration: load → clean → filter → dedupe → save.
+Tier 1 (L1: Clean) Orchestration Module.
 
-I/O boundary only — pure logic delegated to text_clean.py and l1_filter.py.
+Part of the L0-L4 Tiered Data Management framework (arXiv:2602.09003).
+Coordinates Phase 1: Ingests raw data (L0) from real web streaming or local substitute,
+applies pure text cleaning (text_clean.py), runs heuristic filtering and exact
+deduplication (l1_filter.py), and persists clean records to Parquet and JSONL.
 """
 
 from __future__ import annotations

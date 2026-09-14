@@ -46,6 +46,11 @@ def main(
         if (_PROJECT_ROOT / config).exists():
             config = _PROJECT_ROOT / config
 
+    if not config.exists():
+        console.print(f"[bold red]Error:[/bold red] Config file not found at: {config.as_posix()}")
+        console.print("[yellow]Hint:[/yellow] Verify the configuration path or choose 'configs/l3_tiny.yaml'.")
+        sys.exit(1)
+
     console.rule("[bold cyan]L3 Demo — Tier 3 LLM Refinement & Synthesis[/bold cyan]")
     console.print(f"Config: [green]{config.as_posix()}[/green]")
 
@@ -59,8 +64,8 @@ def main(
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green", justify="right")
 
-    table.add_row("Input Records (L2 Selected)", str(stats["input_count"]))
-    table.add_row("Refined Records (L3)", str(stats["refined_count"]))
+    table.add_row("Input Records (L2 Selected)", f"{stats['input_count']:,}")
+    table.add_row("Refined Records (L3)", f"{stats['refined_count']:,}")
     table.add_row("Synthesis Generator", stats["generator"])
 
     console.print(table)

@@ -1,16 +1,13 @@
 """
 Evaluation and comparison metrics for tiered data pipelines.
 
-Supports Phase 4: Evaluation and Comparison.
-Computes tier-by-tier metrics:
+Supports Phase 4 (Evaluation & Comparison) of the L0-L4 Tiered Data Management
+framework (arXiv:2602.09003). Computes tier-by-tier metrics:
 - Document count
-- Average character length
-- Average word count
-- Alphabetic character ratio
-- Symbol ratio
-- Duplicate counts
-- Selection and retention rates
-- Validation pass rates
+- Average character length and word count
+- Alphabetic character ratio and symbol ratio
+- Exact duplicate counts
+- Tier-to-tier retention, selection, and validation rates
 """
 
 from __future__ import annotations
@@ -34,20 +31,20 @@ def compute_doc_stats(text: str) -> dict[str, float]:
     symbol_count = sum(1 for c in text_str if not c.isalnum() and not c.isspace())
 
     return {
-        "char_len": char_len,
-        "word_count": word_count,
+        "char_len": float(char_len),
+        "word_count": float(word_count),
         "alpha_ratio": alpha_count / max(char_len, 1),
         "symbol_ratio": symbol_count / max(char_len, 1),
     }
 
 
-def compute_tier_metrics(df: pd.DataFrame, tier_name: str, text_col: str = "text") -> dict[str, Any]:
+def compute_tier_metrics(df: pd.DataFrame | None, tier_name: str, text_col: str = "text") -> dict[str, Any]:
     """
     Compute comprehensive metrics for a given tier dataframe.
 
-    Pure function — deterministic and side-effect free.
+    Pure function — deterministic and side-effect free. Handles empty or None dataframes gracefully.
     """
-    if len(df) == 0:
+    if df is None or len(df) == 0:
         return {
             "tier": tier_name,
             "doc_count": 0,
@@ -88,9 +85,15 @@ def compute_tier_metrics(df: pd.DataFrame, tier_name: str, text_col: str = "text
     }
 
 
-def generate_markdown_report(tier_metrics: list[dict[str, Any]], rates: dict[str, float]) -> str:
+def generate_markdown_report(
+    tier_metrics: list[dict[str, Any]],
+    rates: dict[str, float],
+    source_info: str = "Local Substitute Data (or openbmb/Ultra-FineWeb real sample)",
+) -> str:
     """
     Generate GitHub-flavored Markdown report comparing tiers across the pipeline.
+
+    Includes disclaimer banner, prominent data source indicator, and formatted metric tables.
     """
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -103,6 +106,7 @@ def generate_markdown_report(tier_metrics: list[dict[str, Any]], rates: dict[str
         "> Heuristics, thresholds, and mock LLM synthesizers are lightweight starter implementations and do not claim paper-scale results.",
         "",
         f"**Generated:** {timestamp}  ",
+        f"**Data Source:** `{source_info}`  ",
         "**Environment:** Colab / Linux / Local agnostic  ",
         "",
         "## 1. Tier-by-Tier Quality Progression",
@@ -112,19 +116,26 @@ def generate_markdown_report(tier_metrics: list[dict[str, Any]], rates: dict[str
     ]
 
     tier_descriptions = {
-        "L0_Raw": "Unfiltered substitute web corpus",
-        "L1_Filtered": "Heuristic filtered & exact deduped",
-        "L2_Selected": "Model-selected informative tokens",
-        "L3_Refined": "Mock LLM refined, Q&A & textbook",
-        "L4_Organized": "Validated structured knowledge units",
+        "L0_Raw": "Unfiltered raw web corpus (real sample or substitute)",
+        "L1_Filtered": "Heuristic filtered & exact deduped (clean text)",
+        "L2_Selected": "Model-selected informative tokens (educational)",
+        "L3_Refined": "Mock LLM refined, Q&A pairs & textbook chapters",
+        "L4_Organized": "Validated structured knowledge units with provenance",
     }
 
     for m in tier_metrics:
-        name = m["tier"]
+        name = m.get("tier", "Unknown")
         desc = tier_descriptions.get(name, "Data tier")
+        doc_count = m.get("doc_count", 0)
+        avg_chars = m.get("avg_char_len", 0.0)
+        avg_words = m.get("avg_word_count", 0.0)
+        alpha_ratio = m.get("avg_alpha_ratio", 0.0)
+        symbol_ratio = m.get("avg_symbol_ratio", 0.0)
+        dup_count = m.get("duplicate_count", 0)
+
         lines.append(
-            f"| `{name}` | {desc} | {m['doc_count']} | {m['avg_char_len']} | "
-            f"{m['avg_word_count']} | {m['avg_alpha_ratio']:.4f} | {m['avg_symbol_ratio']:.4f} | {m['duplicate_count']} |"
+            f"| `{name}` | {desc} | {doc_count:,} | {avg_chars:,.1f} | "
+            f"{avg_words:,.1f} | {alpha_ratio:.4f} | {symbol_ratio:.4f} | {dup_count:,} |"
         )
 
     lines.extend([
@@ -139,7 +150,7 @@ def generate_markdown_report(tier_metrics: list[dict[str, Any]], rates: dict[str
         "",
         "## 3. Artifact Locations",
         "",
-        "- `data/l0_raw/l0_expanded_SUBSTITUTE.jsonl`",
+        "- `data/l0_raw/l0_real_sample.jsonl` (or `data/l0_raw/l0_expanded_SUBSTITUTE.jsonl`)",
         "- `data/l1_filtered/l1_expanded_SUBSTITUTE.parquet`",
         "- `data/l2_selected/l2_selected.parquet`",
         "- `data/l3_refined/l3_refined.parquet`",

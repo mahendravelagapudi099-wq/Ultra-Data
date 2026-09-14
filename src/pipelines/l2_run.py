@@ -1,9 +1,10 @@
 """
-L2 orchestration: load L1 data → train selector → score docs → select top tier → save outputs.
+Tier 2 (L2: Selection) Orchestration Module.
 
-Supports Phase 2: Model-Driven Selection.
-I/O boundary only — model logic delegated to l2_select.py.
-All reported paths use POSIX forward-slash format.
+Part of the L0-L4 Tiered Data Management framework (arXiv:2602.09003).
+Coordinates Phase 2: Loads cleaned data (L1), generates weak supervision labels,
+trains a lightweight TF-IDF + numeric feature selector (strictly on train split),
+scores documents, and saves high-value educational tokens (L2) to Parquet and JSONL.
 """
 
 from __future__ import annotations
@@ -44,7 +45,10 @@ def load_l1_data(input_path: str | Path) -> pd.DataFrame:
     if not path.is_absolute():
         path = _PROJECT_ROOT / path
     if not path.exists():
-        raise FileNotFoundError(f"L1 input file not found: {path.as_posix()}")
+        raise FileNotFoundError(
+            f"L1 input file not found: {path.as_posix()}. "
+            "Run Phase 1 first via 'python scripts/run_phase1.py' or 'python scripts/run_l1.py' to generate it."
+        )
 
     if path.suffix == ".parquet":
         return pd.read_parquet(path)
@@ -87,7 +91,7 @@ def run_l2(config_path: str | Path) -> dict[str, Any]:
     df_l1 = load_l1_data(input_path)
     input_count = len(df_l1)
     if input_count == 0:
-        raise ValueError("L1 input dataset is empty. Run Phase 1 first.")
+        raise ValueError("L1 input dataset is empty. Run Phase 1 first via 'python scripts/run_phase1.py'.")
 
     # Generate weak supervision labels
     weak_labels = assign_weak_labels(df_l1)

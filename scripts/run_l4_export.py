@@ -46,6 +46,11 @@ def main(
         if (_PROJECT_ROOT / config).exists():
             config = _PROJECT_ROOT / config
 
+    if not config.exists():
+        console.print(f"[bold red]Error:[/bold red] Config file not found at: {config.as_posix()}")
+        console.print("[yellow]Hint:[/yellow] Verify the configuration path or choose 'configs/l4_tiny.yaml'.")
+        sys.exit(1)
+
     console.rule("[bold cyan]L4 Demo — Tier 4 Organized Knowledge Export[/bold cyan]")
     console.print(f"Config: [green]{config.as_posix()}[/green]")
 
@@ -59,9 +64,9 @@ def main(
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green", justify="right")
 
-    table.add_row("Input Units (L3)", str(stats["input_count"]))
-    table.add_row("Valid Units (L4)", str(stats["valid_count"]))
-    table.add_row("Invalid Units", str(stats["invalid_count"]))
+    table.add_row("Input Units (L3)", f"{stats['input_count']:,}")
+    table.add_row("Valid Units (L4)", f"{stats['valid_count']:,}")
+    table.add_row("Invalid Units", f"{stats['invalid_count']:,}")
     table.add_row("Validation Pass Rate", f"{stats['validation_pass_rate'] * 100:.1f}%")
 
     console.print(table)

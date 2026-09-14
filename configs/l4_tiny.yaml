@@ -1,13 +1,26 @@
+# ==============================================================================
 # L4 Organized Knowledge Export Tiny Demo Configuration
-# Supports Optional Phase 3.5: L4 Organized Knowledge Export
+# Part of the L0-L4 Tiered Data Management Framework (arXiv:2602.09003)
+#
+# NOTE: Structural validation gates and metadata definitions are starter
+# baseline values for demo reproduction — NOT cited from paper.pdf.
+# ==============================================================================
 
 input:
+  # Primary input file: L3 refined and synthesized records
   path: data/l3_refined/l3_refined.parquet
+
+  # Fallback input file if Parquet format is unavailable
   fallback_path: data/l3_refined/l3_refined.jsonl
 
 output:
+  # Output directory for L4 validated, structured knowledge units
   dir: data/l4_organized
+
+  # Base filename for organized outputs
   basename: l4_organized
+
+  # Storage formats to export
   formats:
     - parquet
     - jsonl

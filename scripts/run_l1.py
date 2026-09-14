@@ -46,6 +46,11 @@ def main(
         if (_PROJECT_ROOT / config).exists():
             config = _PROJECT_ROOT / config
 
+    if not config.exists():
+        console.print(f"[bold red]Error:[/bold red] Config file not found at: {config.as_posix()}")
+        console.print("[yellow]Hint:[/yellow] Verify the configuration path or choose 'configs/l1_tiny.yaml' or 'configs/l1_expanded.yaml'.")
+        sys.exit(1)
+
     console.rule("[bold cyan]L1 Tiny Demo — Tier 1 Data Cleaning[/bold cyan]")
     console.print(f"Config: [green]{config.as_posix()}[/green]")
 
@@ -60,11 +65,11 @@ def main(
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green", justify="right")
 
-    table.add_row("Input Count", str(stats["input_count"]))
-    table.add_row("Output Count", str(stats["output_count"]))
-    table.add_row("Removed (filtered)", str(stats["removed_count"]))
-    table.add_row("Duplicates Removed", str(stats["duplicate_count"]))
-    table.add_row("Source Used", stats["source_used"])
+    table.add_row("Input Count", f"{stats['input_count']:,}")
+    table.add_row("Output Count", f"{stats['output_count']:,}")
+    table.add_row("Removed (filtered)", f"{stats['removed_count']:,}")
+    table.add_row("Duplicates Removed", f"{stats['duplicate_count']:,}")
+    table.add_row("Source Used", str(stats["source_used"]))
 
     console.print(table)
 

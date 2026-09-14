@@ -1,14 +1,27 @@
+# ==============================================================================
 # L3 LLM Refinement & Synthesis Tiny Demo Configuration
-# Supports Phase 3: L3 Refinement
-# Offline MockLLMProvider deterministic synthesis — NO external APIs, NO torch/transformers
+# Part of the L0-L4 Tiered Data Management Framework (arXiv:2602.09003)
+#
+# NOTE: Offline MockLLMProvider deterministic synthesis — NO external APIs,
+# NO GPU hardware, and NO heavy weight downloads required.
+# Parameters and structure are starter heuristics — NOT cited from paper.pdf.
+# ==============================================================================
 
 input:
+  # Primary input file: L2 selected documents
   path: data/l2_selected/l2_selected.parquet
+
+  # Fallback input file if Parquet format is unavailable
   fallback_path: data/l2_selected/l2_selected.jsonl
 
 output:
+  # Output directory for L3 synthesized educational records
   dir: data/l3_refined
+
+  # Base filename for outputs (contains refined text, Q&A pairs, textbook explanations)
   basename: l3_refined
+
+  # Storage formats to export
   formats:
     - parquet
     - jsonl

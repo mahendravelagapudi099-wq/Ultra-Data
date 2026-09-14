@@ -39,6 +39,11 @@ def main() -> None:
         if result.returncode != 0:
             print("[Phase 1] Warning: substitute generation failed.")
 
+    config_path = Path(L1_CONFIG)
+    if not config_path.exists():
+        print(f"[Phase 1] Error: L1 configuration file not found at {config_path.as_posix()}.")
+        sys.exit(1)
+
     print(f"[Phase 1] Running L1 filtering with config: {L1_CONFIG}")
     result = subprocess.run(
         [sys.executable, str(_PROJECT_ROOT / "scripts/run_l1.py"), "--config", L1_CONFIG],
