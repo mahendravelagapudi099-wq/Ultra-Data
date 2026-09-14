@@ -1,0 +1,19 @@
+# ==============================================================================
+# Optional heavy dependencies for Extensions A/B/C. Install only if needed.
+# Do NOT add these to requirements.txt — the base pipeline runs fully offline.
+#
+# Usage (in Colab or GPU environment):
+#     pip install -r requirements-ml.txt
+# ==============================================================================
+
+# Extension A: Real LLM synthesis via Google Gemini API
+google-generativeai>=0.7.0
+
+# Extension B: Production-style fast quality filtering
+fasttext-wheel>=0.9.2; sys_platform == 'win32'
+fasttext>=0.9.2; sys_platform != 'win32'
+
+# Extension C: Micro-training experiment on GPT-2
+torch>=2.0.0
+transformers>=4.36.0
+accelerate>=0.25.0

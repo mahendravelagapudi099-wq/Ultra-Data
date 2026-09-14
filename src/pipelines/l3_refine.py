@@ -80,7 +80,16 @@ def run_l3(config_path: str | Path) -> dict[str, Any]:
     if input_count == 0:
         raise ValueError("L2 input dataset is empty. Run Phase 2 first via 'python scripts/run_l2.py'.")
 
-    provider = MockLLMProvider()
+    from src.utils.llm_provider import LLMProvider, MockLLMProvider
+
+    provider_type = str(config.get("provider", "mock")).lower().strip()
+    if provider_type == "gemini":
+        from src.utils.llm_provider import GeminiLLMProvider
+        gemini_model = config.get("gemini_model", "gemini-1.5-flash")
+        provider: LLMProvider = GeminiLLMProvider(model_name=gemini_model)
+    else:
+        provider = MockLLMProvider()
+
     refined_records: list[dict[str, Any]] = []
 
     for _, row in tqdm(df_l2.iterrows(), total=input_count, desc="L3 Refinement", unit="doc"):
@@ -132,7 +141,7 @@ def run_l3(config_path: str | Path) -> dict[str, Any]:
     return {
         "input_count": input_count,
         "refined_count": len(refined_records),
-        "generator": "MockLLMProvider (deterministic offline)",
+        "generator": f"{provider.__class__.__name__} ({getattr(provider, 'model_name', 'default')})",
         "output_path_parquet": parquet_path if "parquet" in formats else None,
         "output_path_jsonl": jsonl_path if "jsonl" in formats else None,
     }

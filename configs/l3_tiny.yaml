@@ -3,9 +3,19 @@
 # Part of the L0-L4 Tiered Data Management Framework (arXiv:2602.09003)
 #
 # NOTE: Offline MockLLMProvider deterministic synthesis — NO external APIs,
-# NO GPU hardware, and NO heavy weight downloads required.
+# NO GPU hardware, and NO heavy weight downloads required by default.
 # Parameters and structure are starter heuristics — NOT cited from paper.pdf.
 # ==============================================================================
+
+# LLM provider selection: mock | gemini
+# - "mock": Offline deterministic MockLLMProvider (zero dependencies, default).
+# - "gemini": Real LLM synthesis via Google Gemini API (Extension A).
+#   Requires GEMINI_API_KEY environment variable or Google Colab secret.
+provider: "mock"
+
+# Model name when provider is "gemini" (e.g. gemini-1.5-flash, gemini-1.5-flash-8b)
+# Note: Verify available free-tier model identifiers at runtime in Google AI Studio.
+gemini_model: "gemini-1.5-flash"
 
 input:
   # Primary input file: L2 selected documents

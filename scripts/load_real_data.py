@@ -145,7 +145,7 @@ def load_real_sample(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Stream real sample from Hugging Face into L0")
-    parser.add_argument("-n", "--count", type=int, default=NUM_RECORDS, help="Number of records to fetch")
+    parser.add_argument("-n", "--n", "--count", type=int, default=NUM_RECORDS, help="Number of records to fetch")
     args = parser.parse_args()
 
     success = load_real_sample(n=args.count)

@@ -1,0 +1,37 @@
+# ==============================================================================
+# Extension C: Micro-Training Experiment Configuration
+# Part of the L0-L4 Tiered Data Management Framework (arXiv:2602.09003)
+#
+# NOTE: This experiment is a toy demonstration on a small sample to empirically
+# illustrate the downstream value of tiered data management.
+# Requires torch and transformers (install via requirements-ml.txt).
+# ==============================================================================
+
+# Base pre-trained model architecture for fine-tuning
+model_name: "gpt2"
+
+# Token sequence truncation length
+max_length: 256
+
+# Number of fine-tuning epochs per tier dataset
+epochs: 1
+
+# Training batch size per device
+batch_size: 4
+
+# AdamW learning rate
+learning_rate: 0.00005
+
+# Data-volume guard: minimum documents required for statistically meaningful fine-tuning
+# If either tier dataset contains fewer records, a prominent warning is displayed.
+min_required_records: 200
+
+# Input datasets
+l1_path: "data/l1_filtered/l1_expanded_SUBSTITUTE.jsonl"
+l4_path: "data/l4_organized/l4_organized.jsonl"
+
+# Held-out validation split ratio (shared across both models to ensure fair perplexity comparison)
+val_ratio: 0.15
+
+# Output comparison report path
+output_report: "reports/microtrain_comparison.md"

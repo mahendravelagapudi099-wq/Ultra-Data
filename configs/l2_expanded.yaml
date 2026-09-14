@@ -6,6 +6,11 @@
 # baseline values for demo reproduction — NOT cited from paper.pdf.
 # ==============================================================================
 
+# Scorer algorithm selection: sklearn | fasttext
+# - "sklearn": TF-IDF + LogisticRegression baseline (default, zero extra installs).
+# - "fasttext": FastText supervised classifier (Extension B, production-style).
+scorer: "sklearn"
+
 input:
   # Primary input file: L1 cleaned and filtered dataset
   path: data/l1_filtered/l1_expanded_SUBSTITUTE.parquet
@@ -20,8 +25,18 @@ model:
   # Random seed for reproducible dataset splitting and model training
   random_state: 42
 
-  # Maximum number of TF-IDF n-gram features for lexical modeling
+  # Maximum number of TF-IDF n-gram features for lexical modeling (sklearn scorer)
   max_tfidf_features: 500
+
+fasttext:
+  # Training epochs for FastText classifier (used when scorer is "fasttext")
+  epochs: 15
+
+  # Learning rate for FastText
+  lr: 0.5
+
+  # Word n-gram length (captures bigram/trigram phrases)
+  word_ngrams: 2
 
 selection:
   # Quality score probability threshold for document retention (L2 candidates)

@@ -113,3 +113,123 @@ class MockLLMProvider(LLMProvider):
             "model": self.model_name,
             "validation_status": "pending_validation",
         }
+
+
+class GeminiLLMProvider(LLMProvider):
+    """
+    Real LLM synthesis provider leveraging Google Gemini API.
+
+    Extension A for Phase 3 (Tier 3: Refined Knowledge).
+    Transforms selected raw web tokens into high-density educational text,
+    conceptual Q&A pairs, and structured textbook chapters using a real LLM.
+
+    API and SDK Notes:
+    - Targets the `google-generativeai` SDK. Note: Google has introduced
+      the newer `google-genai` SDK in late 2024; if `google-generativeai` is deprecated
+      in your environment, install `google-genai` and configure accordingly.
+    - Model availability: Default is "gemini-1.5-flash". Free-tier model availability
+      and names evolve on Google AI Studio (e.g. "gemini-1.5-flash", "gemini-1.5-flash-8b",
+      "gemini-2.0-flash"); verify available models in your Google AI Studio console.
+    - Fault tolerance: If the API request fails (rate limits, network timeout) or JSON parsing
+      fails, this provider falls back gracefully to deterministic MockLLMProvider for that record.
+    """
+
+    def __init__(self, model_name: str = "gemini-1.5-flash", api_key: str | None = None) -> None:
+        self.model_name = model_name
+        self._fallback_provider = MockLLMProvider()
+
+        import os
+        self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "GEMINI_API_KEY environment variable not found.\n"
+                "To use GeminiLLMProvider (Extension A):\n"
+                "1. Obtain a free API key from Google AI Studio: https://aistudio.google.com/\n"
+                "2. In Google Colab, add the key in the Secrets tab (key: 'GEMINI_API_KEY') and run:\n"
+                "   from google.colab import userdata\n"
+                "   import os\n"
+                "   os.environ['GEMINI_API_KEY'] = userdata.get('GEMINI_API_KEY')\n"
+                "3. In local/Linux terminal, export GEMINI_API_KEY='your-key-here'."
+            )
+
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=self.api_key)
+            self._client = genai.GenerativeModel(self.model_name)
+        except ImportError as err:
+            raise ImportError(
+                f"google-generativeai package not found ({err}).\n"
+                "Please install optional ML dependencies via:\n"
+                "    pip install -r requirements-ml.txt\n"
+                "or: pip install google-generativeai"
+            ) from err
+
+    def refine_document(self, text: str, doc_id: str = "") -> dict[str, Any]:
+        """
+        Synthesize document using Gemini API with structured JSON output.
+        Falls back to MockLLMProvider upon API or parsing failures.
+        """
+        import json
+        import logging
+
+        prompt = (
+            "You are an expert educational AI data engineer curating pre-training data for LLMs.\n"
+            "Given the following web text, synthesize it into high-density educational formats.\n"
+            "Respond ONLY with a valid, strictly formatted JSON object with no preamble or commentary.\n\n"
+            "Required JSON schema:\n"
+            "{\n"
+            '  "refined_text": "### Overview: <Entity>\\n\\n<Polished, informative 1-2 paragraph summary>",\n'
+            '  "question": "A conceptual, educational question testing understanding of the text?",\n'
+            '  "answer": "A detailed, grounded, factual answer based directly on the text (at least 15 words).",\n'
+            '  "textbook_explanation": "# Chapter: <Topic>\\n\\n## 1. Introduction and Core Definition\\n<Paragraph>\\n\\n## 2. Key Principles and Mechanism\\n<Paragraph>\\n\\n## 3. Conceptual Summary\\n- <Bullet 1>\\n- <Bullet 2>",\n'
+            '  "primary_topic": "<Short entity or topic name>"\n'
+            "}\n\n"
+            f"Input text:\n{text[:3000]}\n"
+        )
+
+        try:
+            response = self._client.generate_content(
+                prompt,
+                generation_config={"temperature": 0.2, "top_p": 0.95},
+            )
+            raw_output = response.text.strip()
+            if raw_output.startswith("```"):
+                lines = raw_output.splitlines()
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                raw_output = "\n".join(lines).strip()
+
+            parsed = json.loads(raw_output)
+
+            refined_text = str(parsed.get("refined_text", "")).strip()
+            question = str(parsed.get("question", "")).strip()
+            answer = str(parsed.get("answer", "")).strip()
+            textbook = str(parsed.get("textbook_explanation", "")).strip()
+            topic = str(parsed.get("primary_topic", "")).strip() or "Machine Learning Concept"
+
+            if not refined_text or not question or not answer or not textbook:
+                raise ValueError("Gemini response was missing required structural fields.")
+
+            return {
+                "text_refined": refined_text,
+                "qa_pair": {
+                    "question": question,
+                    "answer": answer,
+                },
+                "textbook_explanation": textbook,
+                "primary_topic": topic,
+                "generated_by": "gemini_llm",
+                "model": self.model_name,
+                "validation_status": "pending_validation",
+            }
+        except Exception as e:
+            logging.warning(
+                f"[GeminiLLMProvider] API call or parsing failed for doc {doc_id}: {e}. "
+                "Falling back gracefully to MockLLMProvider for this record."
+            )
+            fallback_res = self._fallback_provider.refine_document(text, doc_id=doc_id)
+            fallback_res["generated_by"] = "mock_llm_fallback"
+            return fallback_res
+

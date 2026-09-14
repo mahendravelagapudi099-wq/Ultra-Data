@@ -47,7 +47,9 @@ Ultra-Dataa/
 │   ├── l2_tiny.yaml             # L2 selection config
 │   ├── l2_expanded.yaml         # L2 expanded selection config
 │   ├── l3_tiny.yaml             # L3 synthesis config
-│   └── l4_tiny.yaml             # L4 structured export config
+│   ├── l3_tiny.yaml             # L3 synthesis config
+│   ├── l4_tiny.yaml             # L4 structured export config
+│   └── microtrain.yaml          # Extension C GPT-2 micro-training config
 ├── src/
 │   ├── __init__.py
 │   ├── pipelines/               # Pipeline orchestration & logic
@@ -56,12 +58,13 @@ Ultra-Dataa/
 │   │   ├── l1_filter.py         # L1 logic: heuristic thresholds, SHA-256 dedup
 │   │   ├── l2_run.py            # L2 I/O: loads L1 data, saves scores & selected datasets
 │   │   ├── l2_select.py         # L2 logic: weak labels, TF-IDF + numeric pipeline (train split fit)
-│   │   ├── l3_refine.py         # L3 orchestration: applies MockLLMProvider to selected docs
+│   │   ├── l2_fasttext.py       # Extension B: supervised FastText classifier
+│   │   ├── l3_refine.py         # L3 orchestration: applies MockLLMProvider or GeminiLLMProvider
 │   │   └── l4_export.py         # L4 orchestration: quality validation and metadata formatting
 │   ├── utils/                   # Pure utilities
 │   │   ├── __init__.py
 │   │   ├── text_clean.py        # NFKC normalize, whitespace collapse, boilerplate removal
-│   │   └── llm_provider.py      # LLMProvider abstraction & deterministic MockLLMProvider
+│   │   └── llm_provider.py      # LLMProvider, MockLLMProvider & GeminiLLMProvider
 │   └── evaluation/              # Evaluation metrics
 │       ├── __init__.py
 │       └── metrics.py           # Cross-tier metric computations & Markdown/CSV/JSON reporting
@@ -71,11 +74,12 @@ Ultra-Dataa/
 │   ├── run_phase1.py            # Smart Phase 1 launcher: detects real data or generates substitute
 │   ├── run_l1.py                # Standalone L1 heuristic filtering runner
 │   ├── run_l2.py                # Standalone L2 model selection runner
-│   ├── run_l3.py                # Standalone L3 Mock LLM refinement runner
+│   ├── run_l3.py                # Standalone L3 Mock/Gemini LLM refinement runner
 │   ├── run_l4_export.py         # Standalone L4 structured knowledge export runner
+│   ├── run_microtrain.py        # Extension C: GPT-2 micro-training runner (L1 vs L4 perplexity)
 │   └── run_evaluation.py        # Cross-tier evaluation & report runner
 ├── colab/
-│   ├── run_all.ipynb            # End-to-end execution notebook for Google Colab
+│   ├── run_all.ipynb            # End-to-end execution notebook for Google Colab (with optional extensions)
 │   └── phase2_colab.ipynb       # Focused Phase 2 exploration notebook
 ├── data/                        # Gitignored data tiers (L0 → L4)
 │   ├── l0_raw/                  # Raw input (real sample or local substitute)
@@ -90,7 +94,8 @@ Ultra-Dataa/
 ├── PHASES.md                    # Mapping of codebase to paper concepts
 ├── README.md                    # Project overview, Colab badge, architecture diagram
 ├── RESULTS_TEMPLATE.md          # Output schemas & baseline results table
-└── requirements.txt             # Project dependencies
+├── requirements.txt             # Core pipeline dependencies
+└── requirements-ml.txt          # Optional ML dependencies for Extensions A/B/C
 ```
 
 ## Conventions

@@ -90,5 +90,24 @@ graph TD
 ### Phase 5: Colab Integration & Reproducibility
 - **Paper Concept:** Reproducible workflows across cloud and local compute environments.
 - **Notebooks:**
-  - `colab/run_all.ipynb`: Full end-to-end execution notebook with smart launcher and visual reporting.
+  - `colab/run_all.ipynb`: Full end-to-end execution notebook with smart launcher, visual reporting, and optional extension blocks.
   - `colab/phase2_colab.ipynb`: Dedicated Phase 2 exploration notebook for model-based selection.
+
+---
+
+## Data-Model Co-Evolution: Optional Extensions (A, B, C)
+
+The paper *arXiv:2602.09003* emphasizes that data management and model architectures do not evolve in isolation; they are deeply coupled. As model capabilities advance, they both **require** higher-density structured data (co-evolution Part I) and **enable** higher-quality synthetic transformations (co-evolution Part II).
+
+### Extension A: Real LLM Synthesis via Google Gemini (`src/utils/llm_provider.py`)
+- **Paper Concept:** Section 3.3 — Generative Data Transformation & Model Feedback Loops.
+- **Role:** Rather than relying purely on deterministic rules, production systems use frontier LLMs to rewrite, condense, and generate grounded Q&A pairs and textbook explanations. `GeminiLLMProvider` connects the pipeline to a real generative model (`gemini-1.5-flash`), formatting structured JSON with automated fallback to `MockLLMProvider`.
+
+### Extension B: FastText Quality Classifier (`src/pipelines/l2_fasttext.py`)
+- **Paper Concept:** Section 3.1 & 3.2 — Scalable Linear Classifiers in Massive Web Pipelines.
+- **Role:** In multi-billion-token pipelines (like FineWeb and CCNet), deep neural classifiers are computationally prohibitive for initial token triage. FastText's word n-gram and subword embeddings offer an optimal balance of throughput (>100k docs/sec) and semantic precision for educational filtering.
+
+### Extension C: Micro-Training Downstream Evaluation (`scripts/run_microtrain.py`)
+- **Paper Concept:** Section 4.3 — Downstream Training Dynamics & Perplexity Trajectories.
+- **Role:** The true validation of a tiered data management system is not simply retention counts, but downstream sample efficiency. Extension C trains a 125M parameter causal LM (`gpt2`) on L1 (heuristic cleaned) vs. L4 (structured knowledge units) and benchmarks validation perplexity, empirically demonstrating that systematic data organization reduces token entropy and improves model learning.
+

@@ -96,11 +96,49 @@ def run_l2(config_path: str | Path) -> dict[str, Any]:
     # Generate weak supervision labels
     weak_labels = assign_weak_labels(df_l1)
 
-    # Train selector (train/test split, preprocessor fit on train split only)
-    pipeline, model_metrics = train_l2_selector(df_l1, weak_labels, l2_cfg)
+    scorer_type = str(config.get("scorer", "sklearn")).lower().strip()
+    if scorer_type == "fasttext":
+        import numpy as np
+        from sklearn.model_selection import train_test_split
+        from src.pipelines.l2_fasttext import score_with_fasttext, train_fasttext_classifier
 
-    # Score all records
-    df_scored = score_documents(pipeline, df_l1)
+        ft_cfg = config.get("fasttext", {})
+        epochs = int(ft_cfg.get("epochs", 10))
+        lr = float(ft_cfg.get("lr", 0.5))
+        word_ngrams = int(ft_cfg.get("word_ngrams", 2))
+
+        train_texts, test_texts, train_y, test_y = train_test_split(
+            df_l1["text_clean"].tolist(),
+            weak_labels,
+            test_size=l2_cfg.test_size,
+            random_state=l2_cfg.random_state,
+        )
+        ft_model = train_fasttext_classifier(
+            train_texts=train_texts,
+            train_labels=train_y,
+            epochs=epochs,
+            lr=lr,
+            word_ngrams=word_ngrams,
+        )
+
+        test_preds = (score_with_fasttext(ft_model, test_texts) >= l2_cfg.selection_threshold).astype(int)
+        test_acc = float(np.mean(test_preds == np.array(test_y))) if len(test_y) > 0 else 1.0
+        train_preds = (score_with_fasttext(ft_model, train_texts) >= l2_cfg.selection_threshold).astype(int)
+        train_acc = float(np.mean(train_preds == np.array(train_y))) if len(train_y) > 0 else 1.0
+
+        model_metrics = {
+            "train_accuracy": train_acc,
+            "test_accuracy": test_acc,
+            "train_samples": len(train_texts),
+            "test_samples": len(test_texts),
+        }
+
+        df_scored = df_l1.copy()
+        df_scored["quality_score"] = score_with_fasttext(ft_model, df_l1["text_clean"].tolist())
+    else:
+        # Default: Scikit-learn TF-IDF + LogisticRegression baseline
+        pipeline, model_metrics = train_l2_selector(df_l1, weak_labels, l2_cfg)
+        df_scored = score_documents(pipeline, df_l1)
 
     # Select top documents
     df_selected = select_top_documents(df_scored, l2_cfg)
@@ -131,6 +169,7 @@ def run_l2(config_path: str | Path) -> dict[str, Any]:
         df_selected.to_json(selected_jsonl, orient="records", lines=True, force_ascii=False)
 
     return {
+        "scorer": scorer_type,
         "input_count": input_count,
         "selected_count": selected_count,
         "selection_rate": round(selected_count / max(input_count, 1), 4),

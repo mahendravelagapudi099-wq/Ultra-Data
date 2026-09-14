@@ -113,6 +113,43 @@ python scripts/run_evaluation.py
 
 ---
 
+## Optional Extensions (A, B, C)
+
+Three modular portfolio extensions illustrate advanced data-model co-evolution workflows. All extensions are strictly **optional**, **config-driven**, and **backward-compatible**; the offline pipeline runs seamlessly without them.
+
+> [!IMPORTANT]
+> Optional dependencies are isolated in `requirements-ml.txt` to keep the base pipeline lightweight. Install only if running the extensions:
+> ```bash
+> pip install -r requirements-ml.txt
+> ```
+
+### Extension A: Real LLM Synthesis via Google Gemini (Phase 3)
+Replaces deterministic mock synthesis in Phase 3 with genuine LLM generation (refined overview, conceptual Q&A pairs, and structured textbook chapters) using Google's Gemini API.
+- **Provider:** `GeminiLLMProvider` in [`src/utils/llm_provider.py`](file:///src/utils/llm_provider.py).
+- **Configuration:** Set `provider: "gemini"` and `gemini_model: "gemini-1.5-flash"` in [`configs/l3_tiny.yaml`](file:///configs/l3_tiny.yaml).
+- **Requirements:**
+  - `google-generativeai` package (from `requirements-ml.txt`).
+  - Google Gemini API key from [Google AI Studio](https://aistudio.google.com/). Set as `GEMINI_API_KEY` in environment or Google Colab Secrets (`userdata.get('GEMINI_API_KEY')`).
+- **Resilience:** If the API key is missing or quota/network fails, it automatically and gracefully falls back to `MockLLMProvider` for that record. All outputs are explicitly tagged with `generated_by: "gemini_llm"`.
+
+### Extension B: FastText Quality Classifier (Phase 2)
+Replaces the baseline Scikit-learn TF-IDF + Logistic Regression selector in Phase 2 with a fast, supervised FastText text classifier—mirroring production web curation architectures (e.g., CCNet, FineWeb).
+- **Module:** [`src/pipelines/l2_fasttext.py`](file:///src/pipelines/l2_fasttext.py).
+- **Configuration:** Set `scorer: "fasttext"` in [`configs/l2_tiny.yaml`](file:///configs/l2_tiny.yaml) or [`configs/l2_expanded.yaml`](file:///configs/l2_expanded.yaml).
+- **Requirements:** `fasttext` (Linux / Colab) or `fasttext-wheel` (Windows).
+- **Behavior:** Trains a supervised subword FastText model on weak educational labels and outputs continuous quality probabilities.
+
+### Extension C: Downstream Micro-Training Experiment
+Fine-tunes a miniature language model (GPT-2 125M) separately on **L1 filtered web text** vs. **L4 organized knowledge units** to empirically evaluate downstream validation perplexity (PPL).
+- **CLI Script:** [`scripts/run_microtrain.py`](file:///scripts/run_microtrain.py).
+- **Configuration:** [`configs/microtrain.yaml`](file:///configs/microtrain.yaml).
+- **Requirements:** `torch`, `transformers`, `accelerate` (from `requirements-ml.txt`). GPU runtime recommended (e.g., Google Colab T4 GPU).
+- **Data Volume Guard:** If L1 or L4 record count is below 200, a prominent terminal warning is displayed recommending streaming a larger sample (`python scripts/load_real_data.py --n 5000`).
+- **Evaluation Report:** Generated at [`reports/microtrain_comparison.md`](file:///reports/microtrain_comparison.md).
+- **Disclaimer:** *Toy demonstration on a small sample — not a rigorous proof.* Illustrates the core thesis of arXiv:2602.09003: higher-density, structured training data accelerates sample efficiency and lowers language model perplexity.
+
+---
+
 ## Project Structure
 
 ```
@@ -120,21 +157,23 @@ Ultra-Dataa/
 ├── configs/                     # Config-driven pipeline parameters
 │   ├── l1_tiny.yaml             # L1 small test configuration (20 docs)
 │   ├── l1_expanded.yaml         # L1 expanded configuration (real data + fallback)
-│   ├── l2_tiny.yaml             # L2 selection model configuration
+│   ├── l2_tiny.yaml             # L2 selection model configuration (sklearn / fasttext)
 │   ├── l2_expanded.yaml         # L2 expanded selection configuration
-│   ├── l3_tiny.yaml             # L3 Mock LLM refinement configuration
-│   └── l4_tiny.yaml             # L4 structured knowledge export configuration
+│   ├── l3_tiny.yaml             # L3 synthesis configuration (mock / gemini)
+│   ├── l4_tiny.yaml             # L4 structured knowledge export configuration
+│   └── microtrain.yaml          # Extension C GPT-2 fine-tuning configuration
 ├── src/
 │   ├── pipelines/               # Pipeline orchestration & business logic
 │   │   ├── l1_filter.py         # Pure heuristic filter rules & SHA-256 deduplication
 │   │   ├── l1_run.py            # Phase 1 I/O orchestration & streaming loading
+│   │   ├── l2_fasttext.py       # Extension B FastText quality classifier
 │   │   ├── l2_select.py         # Phase 2 ML selector (preprocessing fit on train split only)
 │   │   ├── l2_run.py            # Phase 2 scoring & selection orchestration
-│   │   ├── l3_refine.py         # Phase 3 Mock LLM refinement orchestration
+│   │   ├── l3_refine.py         # Phase 3 LLM refinement orchestration
 │   │   └── l4_export.py         # Phase 3.5 structural validation & export
 │   ├── utils/                   # Pure utility functions
 │   │   ├── text_clean.py        # NFKC normalization & regex boilerplate removal
-│   │   └── llm_provider.py      # LLMProvider abstraction & MockLLMProvider
+│   │   └── llm_provider.py      # LLMProvider abstraction, MockLLMProvider & GeminiLLMProvider
 │   └── evaluation/
 │       └── metrics.py           # Cross-tier quality metrics & Markdown report generator
 ├── scripts/                     # CLI entry points (Typer + Rich)
@@ -145,16 +184,18 @@ Ultra-Dataa/
 │   ├── run_l2.py                # Standalone Phase 2 runner
 │   ├── run_l3.py                # Standalone Phase 3 runner
 │   ├── run_l4_export.py         # Standalone Phase 3.5 runner
+│   ├── run_microtrain.py        # Extension C GPT-2 micro-training runner
 │   └── run_evaluation.py        # Cross-tier evaluation & report generator
 ├── colab/
-│   ├── run_all.ipynb            # End-to-end Google Colab runner notebook
+│   ├── run_all.ipynb            # End-to-end Google Colab runner notebook (with optional extension cells)
 │   └── phase2_colab.ipynb       # Focused Phase 2 Colab exploration notebook
 ├── data/                        # Gitignored data directory (L0 → L4)
 ├── reports/                     # Generated evaluation summaries (Markdown, CSV, JSON)
 ├── AGENTS.md                    # System conventions and developer guidelines
 ├── PHASES.md                    # Deep-dive mapping of code modules to paper concepts
 ├── RESULTS_TEMPLATE.md          # Data schema specifications and baseline metrics
-└── requirements.txt             # Project dependencies
+├── requirements.txt             # Core lightweight pipeline dependencies
+└── requirements-ml.txt          # Optional ML dependencies for Extensions A/B/C
 ```
 
 ---
@@ -166,5 +207,5 @@ Ultra-Dataa/
 > This project is an architectural reproduction of the tiered data management framework presented in [arXiv:2602.09003](https://arxiv.org/abs/2602.09003).
 >
 > - All filter thresholds, weak supervision heuristics, and selection ratios are starter values for demo purposes and do not claim paper-scale benchmark results.
-> - The L3 synthesis phase uses an offline, deterministic `MockLLMProvider` to demonstrate educational Q&A and textbook formatting without requiring external API keys, GPUs, or heavy model weights.
-> - The pipeline is designed to be fully modular: users can substitute production LLM endpoints (OpenAI, Anthropic, Gemini, local Ollama) by subclassing `LLMProvider` in `src/utils/llm_provider.py`.
+> - The default L3 synthesis phase uses an offline, deterministic `MockLLMProvider` to demonstrate educational Q&A and textbook formatting without requiring external API keys, GPUs, or heavy model weights.
+> - The pipeline is designed to be fully modular: users can substitute production LLM endpoints (OpenAI, Anthropic, Gemini) via `GeminiLLMProvider` or custom subclasses of `LLMProvider` in [`src/utils/llm_provider.py`](file:///src/utils/llm_provider.py).
