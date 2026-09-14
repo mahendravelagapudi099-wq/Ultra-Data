@@ -1,0 +1,62 @@
+{
+  "tier_metrics": [
+    {
+      "tier": "L0_Raw",
+      "doc_count": 145,
+      "avg_char_len": 181.9,
+      "avg_word_count": 24.0,
+      "avg_alpha_ratio": 0.7996,
+      "avg_symbol_ratio": 0.0762,
+      "duplicate_count": 10,
+      "unique_doc_count": 135
+    },
+    {
+      "tier": "L1_Filtered",
+      "doc_count": 33,
+      "avg_char_len": 282.8,
+      "avg_word_count": 38.2,
+      "avg_alpha_ratio": 0.8428,
+      "avg_symbol_ratio": 0.0248,
+      "duplicate_count": 0,
+      "unique_doc_count": 33
+    },
+    {
+      "tier": "L2_Selected",
+      "doc_count": 16,
+      "avg_char_len": 317.8,
+      "avg_word_count": 43.8,
+      "avg_alpha_ratio": 0.8377,
+      "avg_symbol_ratio": 0.0251,
+      "duplicate_count": 0,
+      "unique_doc_count": 16
+    },
+    {
+      "tier": "L3_Refined",
+      "doc_count": 16,
+      "avg_char_len": 317.8,
+      "avg_word_count": 43.8,
+      "avg_alpha_ratio": 0.8377,
+      "avg_symbol_ratio": 0.0251,
+      "duplicate_count": 0,
+      "unique_doc_count": 16
+    },
+    {
+      "tier": "L4_Organized",
+      "doc_count": 16,
+      "avg_char_len": 366.7,
+      "avg_word_count": 49.4,
+      "avg_alpha_ratio": 0.8251,
+      "avg_symbol_ratio": 0.0349,
+      "duplicate_count": 0,
+      "unique_doc_count": 16
+    }
+  ],
+  "transition_rates": {
+    "l1_retention": 0.2276,
+    "l2_selection_rate": 0.4848,
+    "l3_refinement_rate": 1.0,
+    "l4_pass_rate": 1.0,
+    "end_to_end_rate": 0.1103
+  },
+  "disclaimer": "Tiny demo reproduction \u2014 starter heuristics and mock models, not paper-scale results."
+}

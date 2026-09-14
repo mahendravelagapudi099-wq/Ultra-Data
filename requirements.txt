@@ -1,0 +1,21 @@
+pandas
+pyarrow
+pyyaml
+tqdm
+python-dotenv
+typer
+rich
+requests
+jupyter
+matplotlib
+seaborn
+scikit-learn
+datasets
+huggingface_hub
+trafilatura
+
+# Optional later packages:
+# transformers
+# torch
+# fasttext
+# datatrove

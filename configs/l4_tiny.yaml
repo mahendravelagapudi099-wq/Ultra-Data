@@ -1,0 +1,13 @@
+# L4 Organized Knowledge Export Tiny Demo Configuration
+# Supports Optional Phase 3.5: L4 Organized Knowledge Export
+
+input:
+  path: data/l3_refined/l3_refined.parquet
+  fallback_path: data/l3_refined/l3_refined.jsonl
+
+output:
+  dir: data/l4_organized
+  basename: l4_organized
+  formats:
+    - parquet
+    - jsonl

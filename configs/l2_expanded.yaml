@@ -1,0 +1,23 @@
+# L2 Selection Expanded Demo Configuration
+# Supports Phase 2: Model-Driven Selection
+
+input:
+  path: data/l1_filtered/l1_expanded_SUBSTITUTE.parquet
+  fallback_path: data/l1_filtered/l1_filtered_tiny.parquet
+
+model:
+  test_size: 0.3
+  random_state: 42
+  max_tfidf_features: 500
+
+selection:
+  threshold: 0.50
+  top_k_ratio: 0.50
+
+output:
+  scores_dir: data/l2_scores
+  selected_dir: data/l2_selected
+  basename: l2_selected
+  formats:
+    - parquet
+    - jsonl

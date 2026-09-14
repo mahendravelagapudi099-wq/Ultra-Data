@@ -1,0 +1,14 @@
+# L3 LLM Refinement & Synthesis Tiny Demo Configuration
+# Supports Phase 3: L3 Refinement
+# Offline MockLLMProvider deterministic synthesis — NO external APIs, NO torch/transformers
+
+input:
+  path: data/l2_selected/l2_selected.parquet
+  fallback_path: data/l2_selected/l2_selected.jsonl
+
+output:
+  dir: data/l3_refined
+  basename: l3_refined
+  formats:
+    - parquet
+    - jsonl

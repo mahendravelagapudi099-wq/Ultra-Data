@@ -1,0 +1,6 @@
+tier,doc_count,avg_char_len,avg_word_count,avg_alpha_ratio,avg_symbol_ratio,duplicate_count,unique_doc_count
+L0_Raw,145,181.9,24.0,0.7996,0.0762,10,135
+L1_Filtered,33,282.8,38.2,0.8428,0.0248,0,33
+L2_Selected,16,317.8,43.8,0.8377,0.0251,0,16
+L3_Refined,16,317.8,43.8,0.8377,0.0251,0,16
+L4_Organized,16,366.7,49.4,0.8251,0.0349,0,16
