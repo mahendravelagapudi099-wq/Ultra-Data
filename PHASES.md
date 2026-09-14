@@ -24,11 +24,14 @@ graph TD
 ## Phase Breakdown
 
 ### Phase 1: L1 Heuristic Filtering (Tier 1: Clean)
-- **Objective:** Eliminate corrupted, truncated, symbol-heavy, boilerplate, or exact-duplicate web documents.
+- **Objective:** Ingest real or substitute web data, clean unicode/boilerplate, and eliminate corrupted, truncated, symbol-heavy, or duplicate web documents.
+- **Data Ingestion:**
+  - `scripts/load_real_data.py`: Streams 300 real web documents from `openbmb/Ultra-FineWeb` (Hugging Face) into `data/l0_raw/l0_real_sample.jsonl`.
+  - `scripts/generate_l0_expanded.py`: Generates synthetic local substitute data (`data/l0_raw/l0_expanded_SUBSTITUTE.jsonl`) used automatically if network streaming times out or is offline.
 - **Components:**
   - `src/utils/text_clean.py`: NFKC unicode normalization, whitespace stripping, boilerplate stripping.
   - `src/pipelines/l1_filter.py`: Heuristic thresholds (`min_chars`, `min_words`, `min_alpha_ratio`, `max_symbol_ratio`) and SHA-256 exact deduplication.
-  - `src/pipelines/l1_run.py`: I/O orchestrator with fallback chain (Ultra-FineWeb / FineWeb streaming → local substitute).
+  - `src/pipelines/l1_run.py`: I/O orchestrator with automatic fallback chain (Real sample → Ultra-FineWeb / FineWeb streaming → local substitute).
   - `scripts/run_l1.py`: CLI entry point.
 - **Configs:** `configs/l1_tiny.yaml`, `configs/l1_expanded.yaml`.
 - **Outputs:** `data/l1_filtered/` (Parquet + JSONL).

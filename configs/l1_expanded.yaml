@@ -1,12 +1,14 @@
-# L1 Expanded Demo Configuration
+# L1 Expanded Configuration
+# Supports real data ingestion from openbmb/Ultra-FineWeb with automatic mock fallback
 # Thresholds are starter heuristic values — NOT cited from paper.pdf
-# Outputs to data/l1_filtered/l1_expanded_SUBSTITUTE.jsonl
 
 input:
-  mode: local_substitute
-  dataset: HuggingFaceFW/fineweb
-  split: sample-10BT
-  n: 200
+  use_real_data: true
+  real_data_path: data/l0_raw/l0_real_sample.jsonl
+  mode: real_data_streaming
+  dataset: openbmb/Ultra-FineWeb
+  split: train
+  n: 300
   fallback_path: data/l0_raw/l0_expanded_SUBSTITUTE.jsonl
 
 filters:

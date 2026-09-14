@@ -92,19 +92,38 @@ def load_local_substitute(path: str | Path) -> list[dict[str, Any]]:
 def load_raw_data(config: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
     """
     Load raw data with fallback chain:
-    1. Try ultra_fineweb_streaming (if mode set)
-    2. Try fineweb_streaming
-    3. Fall back to local substitute
+    1. Check if use_real_data is enabled and real_data_path exists & non-empty
+    2. Try ultra_fineweb_streaming (if mode set)
+    3. Try fineweb_streaming
+    4. Fall back to local substitute
 
     Returns:
         (records, source_used)
     """
     input_cfg = config["input"]
-    mode = input_cfg.get("mode", "fineweb_streaming")
-    n = input_cfg.get("n", 20)
+    use_real_data = input_cfg.get("use_real_data", False)
+    real_data_path = input_cfg.get("real_data_path")
+    n = input_cfg.get("n", 200)
     fallback_path = input_cfg.get("fallback_path")
 
-    # Try Ultra-FineWeb first if requested
+    # 1. Check real_data_path if use_real_data is True
+    if use_real_data and real_data_path:
+        p = Path(real_data_path)
+        if p.exists() and p.is_file() and p.stat().st_size > 0:
+            try:
+                records = load_local_substitute(p)
+                if records:
+                    print(f"[L1] Loaded {len(records[:n])} real data records from {p.as_posix()}")
+                    return records[:n], "openbmb/Ultra-FineWeb (real)"
+            except Exception as e:
+                print(f"[L1] Warning: Failed to read real data file at {p.as_posix()}: {e}")
+        else:
+            print(f"[L1] Warning: Real data file '{real_data_path}' not found or empty.")
+            print("[L1] Automatically falling back to local substitute data...")
+
+    mode = input_cfg.get("mode", "local_substitute")
+
+    # 2. Try Ultra-FineWeb first if requested
     if mode == "ultra_fineweb_streaming":
         try:
             dataset = input_cfg.get("dataset", "openbmb/Ultra-FineWeb")
@@ -115,7 +134,7 @@ def load_raw_data(config: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
         except Exception as e:
             print(f"[L1] Ultra-FineWeb streaming failed: {e}. Trying FineWeb...")
 
-    # Try FineWeb
+    # 3. Try FineWeb
     if mode in ("fineweb_streaming", "ultra_fineweb_streaming"):
         try:
             dataset = input_cfg.get("dataset", "HuggingFaceFW/fineweb")
@@ -126,9 +145,10 @@ def load_raw_data(config: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
         except Exception as e:
             print(f"[L1] FineWeb streaming failed: {e}. Using local substitute...")
 
-    # Fallback to local substitute
+    # 4. Fallback to local substitute
     if fallback_path and Path(fallback_path).exists():
         records = load_local_substitute(fallback_path)
+        print(f"[L1] Using local substitute data: {fallback_path}")
         return records[:n], "local_substitute"
 
     raise RuntimeError("No data source available and no fallback file found.")

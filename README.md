@@ -57,6 +57,7 @@ Ultra-Dataa/
 │       └── metrics.py           # Cross-tier statistics & report generation
 ├── scripts/
 │   ├── generate_l0_expanded.py  # L0 synthetic substitute generator (~150 docs)
+│   ├── load_real_data.py        # Stream real web sample (300 docs) from openbmb/Ultra-FineWeb
 │   ├── run_l1.py                # CLI runner for Phase 1 (L1)
 │   ├── run_l2.py                # CLI runner for Phase 2 (L2)
 │   ├── run_l3.py                # CLI runner for Phase 3 (L3)
@@ -64,9 +65,9 @@ Ultra-Dataa/
 │   └── run_evaluation.py        # CLI runner for Phase 4 (Evaluation)
 ├── colab/
 │   ├── phase2_colab.ipynb       # Colab execution notebook for Phase 2
-│   └── run_all.ipynb            # Complete 9-cell end-to-end execution notebook
+│   └── run_all.ipynb            # Complete end-to-end execution notebook
 ├── data/                        # Gitignored data directory
-│   ├── l0_raw/
+│   ├── l0_raw/                  # Raw input (real sample or local substitute)
 │   ├── l1_filtered/
 │   ├── l2_scores/
 │   ├── l2_selected/
@@ -92,19 +93,23 @@ Open [colab/run_all.ipynb](colab/run_all.ipynb) in Google Colab and run the cell
 !pip install -q -r requirements.txt
 
 # 2. Set PYTHONPATH
-!PYTHONPATH=. python scripts/generate_l0_expanded.py
+# (configured via notebook cell)
 
-# 3. Phase 1: L1 Heuristic Filtering
+# 3. Stream real data from openbmb/Ultra-FineWeb (or automatic fallback)
+!PYTHONPATH=. python scripts/load_real_data.py
+
+# 4. Phase 1: L1 Heuristic Filtering (uses real sample if available, else mock data)
+!PYTHONPATH=. python scripts/generate_l0_expanded.py
 !PYTHONPATH=. python scripts/run_l1.py --config configs/l1_expanded.yaml
 
-# 4. Phase 2: L2 Model Selection
+# 5. Phase 2: L2 Model Selection
 !PYTHONPATH=. python scripts/run_l2.py --config configs/l2_tiny.yaml
 
-# 5. Phase 3: L3 Refinement & Phase 3.5: L4 Export
+# 6. Phase 3: L3 Refinement & Phase 3.5: L4 Export
 !PYTHONPATH=. python scripts/run_l3.py --config configs/l3_tiny.yaml
 !PYTHONPATH=. python scripts/run_l4_export.py --config configs/l4_tiny.yaml
 
-# 6. Phase 4: Evaluation
+# 7. Phase 4: Evaluation
 !PYTHONPATH=. python scripts/run_evaluation.py
 ```
 
