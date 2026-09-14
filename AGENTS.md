@@ -31,6 +31,8 @@ Or open and run `colab/run_all.ipynb` in Google Colab.
 ```
 scripts/                  # CLI entry points (Typer + Rich)
   generate_l0_expanded.py # Generates ~150-row local substitute dataset
+  load_real_data.py       # Streams 300 real records from openbmb/Ultra-FineWeb → L0
+  run_phase1.py           # Phase 1 launcher: uses real data if available, else substitute; then runs L1
   run_l1.py               # L1 Heuristic filtering runner
   run_l2.py               # L2 Model selection runner
   run_l3.py               # L3 Mock LLM refinement runner
